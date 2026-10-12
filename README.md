@@ -145,3 +145,5 @@ FEWSHOT_OUTPUT/                # 即 RUN_DIR
 ```
 
 每张图片对应一个同名 JSON，记录 prompt、seed、模型与LoRA信息、采样参数和图片校验值。直接用浏览器打开 `$FEWSHOT_OUTPUT/report/index.html` 查看结果。
+
+已完成的生成示例：[FLUX.2 LoRA 图片与逐图 JSON](examples/flux2/README.md)。
