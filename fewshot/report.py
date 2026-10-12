@@ -6,7 +6,13 @@ from .core import read
 def build(run):
  run=Path(run);esc=lambda s:html.escape(str(s));parts=[]
  for batch in sorted((run/'generations').iterdir(),reverse=True):
-  rows=[read(p) for kind in ['base','lora'] for p in sorted((batch/kind).glob('*.json'))]
+  audit={(r['kind'],r['index']):r for r in read(batch/'index.json')} if (batch/'index.json').exists() else {}
+  rows=[]
+  for kind in ['base','lora']:
+   for p in sorted((batch/kind).glob('*.json')):
+    row=dict(audit.get((kind,int(p.stem))) or read(p))
+    row.update(kind=kind,index=int(p.stem),image=kind+'/'+p.with_suffix('.png').name)
+    rows.append(row)
   if not rows:continue
   parts.append('<h2>'+esc(batch.name)+'</h2>')
   for i in sorted({r['index'] for r in rows}):

@@ -1,7 +1,32 @@
-"""Paired generation with one immutable JSON sidecar per image."""
-import hashlib, json, time
+"""Paired generation with concise image sidecars and a full batch index."""
+import hashlib, os, time
 from pathlib import Path
 from .core import verify_inputs,device,dump,read,sha,stamp,now
+
+
+def image_metadata(meta,json_path):
+ """Public image metadata; every file path is relative to its JSON file."""
+ fields=('image','prompt','seed','model','base_model','adapter_path','training_step',
+         'width','height','sampling_steps','guidance_scale','scheduler',
+         'negative_prompt','label','label_source','adapter_heads','adapter_fusion_weights')
+ result={key:meta[key] for key in fields if meta.get(key) is not None}
+ result['image']=Path(meta['image']).name
+ for key in ('base_model','adapter_path'):
+  if key in result and Path(result[key]).is_absolute():
+   result[key]=os.path.relpath(result[key],Path(json_path).parent)
+ return result
+
+
+def existing_record(sidecar,audit,prompt,seed,adapter):
+ saved=read(sidecar);record=audit if audit is not None else saved
+ if 'image_sha256' not in record:
+  raise ValueError('Missing batch index.json; cannot verify existing image')
+ if (record['prompt']!=prompt or record['seed']!=seed
+     or record['adapter_weights_sha256']!=adapter
+     or sha(sidecar.with_suffix('.png'))!=record['image_sha256']
+     or (saved!=record and saved!=image_metadata(record,sidecar))):
+  raise ValueError('Existing image/metadata mismatch; refusing to overwrite')
+ return record
 
 
 def generate(run,c,prompt=None,num=None,resume_batch=None):
@@ -38,6 +63,7 @@ def generate(run,c,prompt=None,num=None,resume_batch=None):
  import fcntl
  lock=(batch/'generation.lock').open('a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
  dump(batch/'scheduler.json',dict(pipe.scheduler.config))
+ audit={(r['kind'],r['index']):r for r in read(batch/'index.json')} if (batch/'index.json').exists() else {}
  noise_hash={}
  if flux:
   original=pipe.prepare_latents
@@ -64,9 +90,10 @@ def generate(run,c,prompt=None,num=None,resume_batch=None):
     text=plan[i]['prompt'];seed=plan[i]['seed'];label=plan[i].get('label')
    existing=dest/f'{i:06d}.json'
    if existing.exists():
-    saved=read(existing)
     expected_adapter=applied_weights(label) if kind=='lora' else None
-    if saved['prompt']!=text or saved['seed']!=seed or saved['adapter_weights_sha256']!=expected_adapter or sha(existing.with_suffix('.png'))!=saved['image_sha256']:raise ValueError('Existing image/metadata mismatch; refusing to overwrite')
+    saved=existing_record(existing,audit.get((kind,i)),text,seed,expected_adapter)
+    audit[kind,i]=saved
+    if kind=='lora' and g['compare_base'] and audit['base',i]['initial_noise_sha256']!=saved['initial_noise_sha256']:raise RuntimeError('Paired noise mismatch')
     records.append(saved);continue
    token_text=text
    if flux:token_text=pipe.tokenizer.apply_chat_template([{'role':'user','content':text}],tokenize=False,add_generation_prompt=True,enable_thinking=False)
@@ -96,9 +123,12 @@ def generate(run,c,prompt=None,num=None,resume_batch=None):
    filename=f'{i:06d}.png';p=dest/filename;image.save(p)
    meta=dict(schema_version=1,image=str(p.relative_to(batch)),image_sha256=sha(p),created=now(),run_id=run.name,batch_id=batch.name,pair_id=f'{batch.name}:{i}',kind=kind,index=i,prompt=text,negative_prompt=g['negative_prompt'],seed=seed,initial_noise_sha256=noise_hash['sha256'],width=image.width,height=image.height,model=c['model'],base_model=c['paths']['base_model'],base_model_config_sha256=sha(Path(c['paths']['base_model'])/'model_index.json'),adapter_weights_sha256=applied_weights(label) if kind=='lora' else None,training_step=trained.get('step') if trained and kind=='lora' else None,adapter_path=str(adapter) if kind=='lora' else None,sampling_steps=g['steps'],guidance_scale=g['guidance_scale'],scheduler=pipe.scheduler.__class__.__name__,scheduler_config_sha256=sha(batch/'scheduler.json'),adapter_fusion_weights=adapter_weights,adapter_heads=head_names,caption_source_image=row['image'] if g['prompt'] is None and not plan else None,label=label,label_source='user_condition_unverified' if label is not None else None,reference_image_used=False,prompt_token_count=token_count,prompt_token_limit=token_limit,prompt_truncated=token_count>token_limit,inference_dtype='bfloat16' if flux else 'float16')
    if kind=='lora' and g['compare_base']:
-    base=read(batch/'base'/f'{i:06d}.json')
+    base=audit['base',i]
     if base['initial_noise_sha256']!=meta['initial_noise_sha256']:raise RuntimeError('Paired noise mismatch')
-   dump(p.with_suffix('.json'),meta);records.append(meta)
+   audit[kind,i]=meta
+   # Save the full record first so a compact sidecar always has recovery evidence.
+   dump(batch/'index.json',list(audit.values()))
+   dump(p.with_suffix('.json'),image_metadata(meta,p.with_suffix('.json')));records.append(meta)
    dump(run/'status.json',dict(phase='generating',training_complete=trained is not None,step=trained.get('step') if trained else None,images=len(records),total_images=total,batch_id=batch.name,elapsed_seconds=time.monotonic()-start))
    print('GENERATED',kind,i,flush=True)
  if provenance!={str(p.relative_to(adapter)):sha(p) for p in weights}:raise RuntimeError('Adapter changed during generation')

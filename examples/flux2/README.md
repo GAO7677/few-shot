@@ -2,9 +2,9 @@
 
 使用仓库中的 [8 张 RarePlanes 示例图片](../../asset/my_data) 训练：rank=4、400 steps。下面展示两个已完成批次，共20张 LoRA 图；每张图都有同名 JSON，记录 prompt、seed 和生成参数。
 
-**路径约定：** JSON 中的文件路径均相对于该 JSON 所在目录；`image` 指向同目录图片，`caption_source_image` 指向仓库中的训练示例。`base_model` 预留到仓库根目录的 `models/FLUX.2-klein-base-4B/`，`adapter_path` 预留到本目录的 `adapter/`，两处权重均未上传。
+**路径约定：** JSON 中的文件路径均相对于该 JSON 所在目录；`image` 指向同目录图片。`base_model` 预留到仓库根目录的 `models/FLUX.2-klein-base-4B/`，`adapter_path` 预留到本目录的 `adapter/`，两处权重均未上传。
 
-图片保持原始字节；导出的 JSON 仅调整路径并增加 `path_base`，保留原始 prompt、seed、权重哈希和生成参数。
+图片保持原始字节。逐图 JSON 仅保留12项必要信息：图片名、prompt、seed、模型、底座路径、LoRA路径、训练步数、宽高、采样步数、guidance scale 和 scheduler。
 
 ## 20261012_062704_582709
 

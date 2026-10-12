@@ -140,10 +140,13 @@ FEWSHOT_OUTPUT/                # 即 RUN_DIR
 │   ├── base/              # 底座图：000000.png + 000000.json
 │   ├── lora/              # LoRA图：000000.png + 000000.json
 │   ├── config.json        # 生成参数
+│   ├── index.json         # 完整记录及校验信息
 │   └── complete.json      # 完成记录
 └── report/index.html      # 图片与prompt对照页面
 ```
 
-每张图片对应一个同名 JSON，记录 prompt、seed、模型与LoRA信息、采样参数和图片校验值。直接用浏览器打开 `$FEWSHOT_OUTPUT/report/index.html` 查看结果。
+每张图片对应一个同名 JSON，仅保留图片名、prompt、seed、模型/LoRA路径、训练步数、尺寸和采样参数；路径均相对于该 JSON。negative prompt、类别条件和 Chimera 混合权重仅在使用时记录。
+
+完整校验信息集中在批次 `index.json`，用于断点生成和同 seed 对照。直接用浏览器打开 `$FEWSHOT_OUTPUT/report/index.html` 查看结果。
 
 已完成的生成示例：[FLUX.2 LoRA 图片与逐图 JSON](examples/flux2/README.md)。
