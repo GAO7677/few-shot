@@ -1,0 +1,53 @@
+{
+  "description": "Eight RarePlanes example images; one new shared caption per group. Not the original per-image-caption protocol.",
+  "images": [
+    {
+      "image": "my_data/medium_crop/01.png",
+      "source_group": "medium_crop",
+      "source_index": 0,
+      "sha256": "804f0c70542210d7ac9eb482b7c60833aaf9888461000c79140eedc2d14911bc"
+    },
+    {
+      "image": "my_data/medium_crop/02.png",
+      "source_group": "medium_crop",
+      "source_index": 1,
+      "sha256": "13b9d5527447a317825e7314a14e927025b46e739185f34bea6e0422b50b4da2"
+    },
+    {
+      "image": "my_data/medium_crop/03.png",
+      "source_group": "medium_crop",
+      "source_index": 2,
+      "sha256": "709e2a2ad6f4a77a879cee0cf2b7a24234c60df122db5ba76e46fe92b2c20d67"
+    },
+    {
+      "image": "my_data/medium_crop/04.png",
+      "source_group": "medium_crop",
+      "source_index": 3,
+      "sha256": "f35676b39f2ace54712af7fe95ec609eaf63077eb3bfa4a25b96daa93b5f7867"
+    },
+    {
+      "image": "my_data/small_tile/01.png",
+      "source_group": "small_tile",
+      "source_index": 0,
+      "sha256": "fb1b4edb8f0c5a5d450b9f88b86fc5a7186363a6d0794b871a83483583e9eb2c"
+    },
+    {
+      "image": "my_data/small_tile/02.png",
+      "source_group": "small_tile",
+      "source_index": 1,
+      "sha256": "4380d26152e644da2b1e398f8afa0c70683838cb017b2a7c668f000baef67a9d"
+    },
+    {
+      "image": "my_data/small_tile/03.png",
+      "source_group": "small_tile",
+      "source_index": 2,
+      "sha256": "ee6b4c9f17541c926c69646074fb370c8c137daf440b1183af30b04456df1430"
+    },
+    {
+      "image": "my_data/small_tile/04.png",
+      "source_group": "small_tile",
+      "source_index": 3,
+      "sha256": "ef45c70ea0ab392f91c306039348bed8340f749ec48fe06bc4cd04a89fe29ef1"
+    }
+  ]
+}
